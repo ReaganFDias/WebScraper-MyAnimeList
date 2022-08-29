@@ -7,6 +7,7 @@ def main():
         bot.accept_policy_button()
         bot.load_top_anime()
         bot.get_top_50_links()
+        bot.scrap_all_data_for_top_50_animes()
 
 if __name__ == "__main__":
     main()

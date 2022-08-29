@@ -90,6 +90,21 @@ class MAL(webdriver.Chrome):
         for animes in top_50_list:
             link_tag = animes.find_element(By.CLASS_NAME, 'hoverinfo_trigger')
             self.top_50_URL.append(link_tag.get_attribute('href'))
-        print(self.top_50_URL)
-        print("scraped top 50 anime's")
+        print("scraped top 50 anime URL's")
+
+    def scrap_all_data_for_top_50_animes(self):
+        url1 = 'https://myanimelist.net/anime/5114/Fullmetal_Alchemist__Brotherhood'
+        with requests.get(url1) as response:
+            html = response.text
+
+        soup = BeautifulSoup(html, 'html.parser')
+        all_dark_text = soup.find_all('span', {'class':'dark_text'})
+        for d_text in all_dark_text:
+            if d_text.text == 'Producers:':
+                prod_tag = d_text
+            else:
+                continue
+        prod_sibs = prod_tag.find_next_siblings('a')
+        for sib in prod_sibs:
+            print(sib.text)
         time.sleep(10)
