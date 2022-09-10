@@ -10,24 +10,27 @@ import constants as const
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver import ActionChains
+from selenium.webdriver.chrome.options import Options
 
 class MAL(webdriver.Chrome):
     def __init__(self, collapse = False):
         #sets a path for the chrome webdriver to be found
         self.collapse = collapse 
         self.top_50_URL = []
+        self.producer_dict = {}
         os.environ['PATH'] += r"/usr/local/bin"
+        options = Options()
+        options.add_argument('--headless')
         super(MAL, self).__init__()
     
     def __exit__(self, *args):
         if self.collapse == True:
             return super().__exit__(*args)
-
+            
     def load_main_page(self):
         #uses the Chrome web driver
         self.get("https://myanimelist.net")
         self.maximize_window()
-        print("loaded main website")
 
     def load_and_accept_cookies(self):
         try:
@@ -45,7 +48,6 @@ class MAL(webdriver.Chrome):
                 button.click()
             else:
                 continue
-        print("loaded and accepted cookies")
 
     def accept_policy_button(self):
         try:
@@ -63,7 +65,6 @@ class MAL(webdriver.Chrome):
                 button.click()
             else:
                 continue
-        print("accepted policy")
     
     def load_top_anime(self):
         try:
@@ -82,7 +83,6 @@ class MAL(webdriver.Chrome):
             else:
                 continue
         self.get(top_anime_URL)
-        print("loaded top anime")
 
     def get_top_50_links(self):
         ranking_table = self.find_element(By.CLASS_NAME, 'top-ranking-table')
@@ -90,14 +90,16 @@ class MAL(webdriver.Chrome):
         for animes in top_50_list:
             link_tag = animes.find_element(By.CLASS_NAME, 'hoverinfo_trigger')
             self.top_50_URL.append(link_tag.get_attribute('href'))
-        print("scraped top 50 anime URL's")
 
     def scrap_all_data_for_top_50_animes(self):
-        url1 = 'https://myanimelist.net/anime/5114/Fullmetal_Alchemist__Brotherhood'
-        with requests.get(url1) as response:
-            html = response.text
+        for url in self.top_50_URL:  
+            with requests.get(url) as response:
+                html = response.text
+            soup = BeautifulSoup(html, 'html.parser')
+            self.get_producers(url,soup)
 
-        soup = BeautifulSoup(html, 'html.parser')
+
+    def get_producers(self,url,soup):
         all_dark_text = soup.find_all('span', {'class':'dark_text'})
         for d_text in all_dark_text:
             if d_text.text == 'Producers:':
@@ -105,6 +107,10 @@ class MAL(webdriver.Chrome):
             else:
                 continue
         prod_sibs = prod_tag.find_next_siblings('a')
+        producers = []
         for sib in prod_sibs:
-            print(sib.text)
-        time.sleep(10)
+            producers.append(sib.text)
+        self.producer_dict[url] = producers
+
+    def get_genres(self,url,soup):
+        pass
